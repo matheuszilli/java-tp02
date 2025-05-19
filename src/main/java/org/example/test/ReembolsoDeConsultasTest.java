@@ -1,6 +1,7 @@
 package org.example.test;
 
 import org.example.model.Paciente;
+import org.example.model.PlanoSaude;
 import org.example.service.CalculadoraReembolso;
 import org.example.repository.HistoricoConsultas;
 import org.junit.Test;
@@ -45,10 +46,10 @@ public class ReembolsoDeConsultasTest {
         Paciente paciente = criarPacienteDummy();
         CalculadoraReembolso reembolso = new CalculadoraReembolso();
         HistoricoConsultas historico = criarHistoricoConsultasDummy();
+        PlanoSaude planoSaude = criarPlanoSaudeStub50PorCento();
 
         double valor = 150.0;
-        double percentualReembolso = 50;
-        double resultado = reembolso.calcular(paciente, valor, percentualReembolso);
+        double resultado = reembolso.calcular(paciente, valor, 50.0 );
 
         historico.registrarConsulta(paciente, valor, resultado, "Consulta de rotina");
 
@@ -58,8 +59,52 @@ public class ReembolsoDeConsultasTest {
         System.out.println((consultas.get(0)));
     }
 
+    @Test
+    public void calcularComPlanoDeSaudeStub50PorCento() {
+        Paciente paciente = criarPacienteDummy();
+        CalculadoraReembolso reembolso = new CalculadoraReembolso();
+        PlanoSaude planoSaude = criarPlanoSaudeStub50PorCento();
+
+        double valorConsulta = 200.0;
+        double resultado = reembolso.calcularPlanoDeSaude(paciente, valorConsulta, planoSaude);
+        double reembolsoEsperado = 100.0;
+
+        assertEquals(reembolsoEsperado, resultado, 0.01);
+    }
+
+    @Test
+    public void calcularComPlanoDeSaudeStub80PorCento() {
+        Paciente paciente = criarPacienteDummy();
+        CalculadoraReembolso reembolso = new CalculadoraReembolso();
+        PlanoSaude planoSaude = criarPlanoSaudeStub80PorCento();
+
+        double valorConsulta = 200.0;
+        double resultado = reembolso.calcularPlanoDeSaude(paciente, valorConsulta, planoSaude);
+        double reembolsoEsperado = 140.0;
+
+        assertEquals(reembolsoEsperado, resultado, 0.01);
+    }
+
     private Paciente criarPacienteDummy() {
         return new Paciente("Matheus Dummy", "123456789-70", "matheus.zilli@al.infnet.edu.br");
+    }
+
+    private PlanoSaude criarPlanoSaudeStub50PorCento() {
+        return new PlanoSaude() {
+            @Override
+            public double getPercentualCobertura() {
+                return 50.0;
+            }
+        };
+    }
+
+    private PlanoSaude criarPlanoSaudeStub80PorCento() {
+        return new PlanoSaude() {
+            @Override
+            public double getPercentualCobertura() {
+                return 70.0;
+            }
+        };
     }
 
     private HistoricoConsultas criarHistoricoConsultasDummy() {
