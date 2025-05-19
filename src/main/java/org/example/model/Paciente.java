@@ -1,10 +1,14 @@
 package org.example.model;
 
+import org.example.repository.HistoricoConsultas;
+
+
 public class Paciente {
 
     private String nome;
     private String cpf;
     private String email;
+
 
     public Paciente(String nome, String cpf, String email) {
         this.nome = nome;
