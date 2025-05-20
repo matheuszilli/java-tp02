@@ -58,7 +58,7 @@ public class ReembolsoDeConsultasTest {
 
         double valorConsulta = 200.0;
         double resultado = reembolso.calcularPlanoDeSaude(paciente, valorConsulta, planoSaude, "Consulta de rotina");
-        double reembolsoEsperado = 160.0;
+        double reembolsoEsperado = 150.0; // Limitado ao teto de 150.0 (seria 160.0 = 200.0 * 80%)
 
         assertValoresIguaisComMargemDeErro(reembolsoEsperado, resultado);
     }
@@ -122,6 +122,48 @@ public class ReembolsoDeConsultasTest {
         assertValoresIguaisComMargemDeErro(reembolsoEsperado, resultado);
     }
 
+    @Test
+    public void deveAplicarTetoDeReembolsoQuandoValorCalculadoExcederLimite() {
+        Paciente paciente = criarPacienteDummy();
+        CalculadoraReembolso reembolso = new CalculadoraReembolso();
+
+        double valorConsulta = 300.0;
+        double percentualReembolso = 80.0;
+
+        double resultado = reembolso.calcular(paciente, valorConsulta, percentualReembolso, "Consulta especializada");
+        double reembolsoEsperado = 150.0;
+
+        assertValoresIguaisComMargemDeErro(reembolsoEsperado, resultado);
+    }
+
+    @Test
+    public void naoDeveAplicarTetoDeReembolsoQuandoValorCalculadoEstiverDentroDoLimite() {
+        Paciente paciente = criarPacienteDummy();
+        CalculadoraReembolso reembolso = new CalculadoraReembolso();
+
+        double valorConsulta = 200.0;
+        double percentualReembolso = 70.0;
+
+        double resultado = reembolso.calcular(paciente, valorConsulta, percentualReembolso, "Consulta padrão");
+        double reembolsoEsperado = 140.0;
+
+        assertValoresIguaisComMargemDeErro(reembolsoEsperado, resultado);
+    }
+
+    @Test
+    public void deveAplicarTetoDeReembolsoComPlanoSaude() {
+        Paciente paciente = criarPacienteDummy();
+        CalculadoraReembolso reembolso = new CalculadoraReembolso();
+        PlanoSaude planoSaude = criarPlanoSaude100PorCento();
+
+        double valorConsulta = 200.0;
+
+        double resultado = reembolso.calcularPlanoDeSaude(paciente, valorConsulta, planoSaude, "Consulta com plano premium");
+        double reembolsoEsperado = 150.0;
+
+        assertValoresIguaisComMargemDeErro(reembolsoEsperado, resultado);
+    }
+
     private Paciente criarPacienteDummy() {
         return new Paciente("Matheus Dummy", "123456789-70", "matheus.zilli@al.infnet.edu.br");
     }
@@ -140,6 +182,15 @@ public class ReembolsoDeConsultasTest {
             @Override
             public double getPercentualCobertura() {
                 return 80.0;
+            }
+        };
+    }
+
+    private PlanoSaude criarPlanoSaude100PorCento() {
+        return new PlanoSaude() {
+            @Override
+            public double getPercentualCobertura() {
+                return 100.0;
             }
         };
     }

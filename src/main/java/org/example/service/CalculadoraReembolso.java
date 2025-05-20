@@ -8,6 +8,7 @@ public class CalculadoraReembolso {
 
     private Auditoria auditoria;
     private AutorizadorReembolso autorizador;
+    private static final double TETO_REEMBOLSO = 150.0; // Valor máximo de reembolso
 
     public CalculadoraReembolso() {
         this.auditoria = null;
@@ -34,6 +35,10 @@ public class CalculadoraReembolso {
 
         double valorReembolso = valorConsulta * (percentualReembolso / 100);
 
+        if (valorReembolso > TETO_REEMBOLSO) {
+            valorReembolso = TETO_REEMBOLSO;
+        }
+
         if (auditoria != null) {
             auditoria.registrarConsulta(paciente, valorConsulta, valorReembolso, observacao);
         }
@@ -52,6 +57,10 @@ public class CalculadoraReembolso {
         }
 
         double valorReembolso = valorConsulta * (percentualReembolso / 100);
+
+        if (valorReembolso > TETO_REEMBOLSO) {
+            valorReembolso = TETO_REEMBOLSO;
+        }
 
         if (auditoria != null) {
             auditoria.registrarConsulta(paciente, valorConsulta, valorReembolso, observacao);
