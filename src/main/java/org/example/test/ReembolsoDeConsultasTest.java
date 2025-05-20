@@ -1,5 +1,6 @@
 package org.example.test;
 
+import org.example.model.Consulta;
 import org.example.model.Paciente;
 import org.example.model.PlanoSaude;
 import org.example.service.CalculadoraReembolso;
@@ -15,32 +16,32 @@ import static org.junit.Assert.assertTrue;
 public class ReembolsoDeConsultasTest {
 
 
-    @Test
-    public void calcularReembolsoDeConsultaCom70PorCentoDeCobertura() {
-        Paciente paciente = criarPacienteDummy();
-        CalculadoraReembolso reembolso = new CalculadoraReembolso();
-        double resultado = reembolso.calcular(paciente, 200.0, 70.0, "Consulta de rotina");
-        double reembolsoEsperado = 140.00;
-        assertEquals(reembolsoEsperado, resultado, 0.01);
-    }
+//    @Test
+//    public void calcularReembolsoDeConsultaCom70PorCentoDeCobertura() {
+//        Paciente paciente = criarPacienteDummy();
+//        CalculadoraReembolso reembolso = new CalculadoraReembolso();
+//        double resultado = reembolso.calcular(paciente, 200.0, 70.0, "Consulta de rotina");
+//        double reembolsoEsperado = 140.00;
+//        assertEquals(reembolsoEsperado, resultado, 0.01);
+//    }
 
-    @Test
-    public void calcularReembolsoDeConsultaCom0PorCentoDeCobertura() {
-        Paciente paciente = criarPacienteDummy();
-        CalculadoraReembolso reembolso = new CalculadoraReembolso();
-        double resultado = reembolso.calcular(paciente, 100.0, 0.0, "Consulta de rotina");
-        double reembolsoEsperado = 0.00;
-        assertEquals(reembolsoEsperado, resultado, 0.01);
-    }
+//    @Test
+//    public void calcularReembolsoDeConsultaCom0PorCentoDeCobertura() {
+//        Paciente paciente = criarPacienteDummy();
+//        CalculadoraReembolso reembolso = new CalculadoraReembolso();
+//        double resultado = reembolso.calcular(paciente, 100.0, 0.0, "Consulta de rotina");
+//        double reembolsoEsperado = 0.00;
+//        assertEquals(reembolsoEsperado, resultado, 0.01);
+//    }
 
-    @Test
-    public void calcularReembolsoDeConsultaCom100PorCentoDeCobertura() {
-        Paciente paciente = criarPacienteDummy();
-        CalculadoraReembolso reembolso = new CalculadoraReembolso();
-        double resultado = reembolso.calcular(paciente, 100.0, 100.0, "Consulta de rotina");
-        double reembolsoEsperado = 100.0;
-        assertEquals(reembolsoEsperado, resultado, 0.01);
-    }
+//    @Test
+//    public void calcularReembolsoDeConsultaCom100PorCentoDeCobertura() {
+//        Paciente paciente = criarPacienteDummy();
+//        CalculadoraReembolso reembolso = new CalculadoraReembolso();
+//        double resultado = reembolso.calcular(paciente, 100.0, 100.0, "Consulta de rotina");
+//        double reembolsoEsperado = 100.0;
+//        assertEquals(reembolsoEsperado, resultado, 0.01);
+//    }
 
     @Test
     public void deveRegistrarConsultaNoHistorico() {
@@ -97,6 +98,54 @@ public class ReembolsoDeConsultasTest {
         assertTrue("O método de auditoria deveria ter sido chamado", auditoriaSpy.foiChamado());
     }
 
+    @Test
+    public void calcularReembolsoDeConsultaCom70PorCentoDeCobertura() {
+        Consulta consulta = criarConsultaPadrao();
+        CalculadoraReembolso reembolso = new CalculadoraReembolso();
+
+        double resultado = reembolso.calcular(
+                consulta.getPaciente(),
+                consulta.getValor(),
+                consulta.getPercentualReembolso(),
+                consulta.getObservacao()
+        );
+
+        double reembolsoEsperado = 140.00;
+        assertEquals(reembolsoEsperado, resultado, 0.01);
+    }
+
+    @Test
+    public void calcularReembolsoDeConsultaCom0PorCentoDeCobertura() {
+        Consulta consulta = criarConsulta(100.0, 0.0, "Consulta de rotina");
+        CalculadoraReembolso reembolso = new CalculadoraReembolso();
+
+        double resultado = reembolso.calcular(
+                consulta.getPaciente(),
+                consulta.getValor(),
+                consulta.getPercentualReembolso(),
+                consulta.getObservacao()
+        );
+
+        double reembolsoEsperado = 0.00;
+        assertEquals(reembolsoEsperado, resultado, 0.01);
+    }
+
+    @Test
+    public void calcularReembolsoDeConsultaCom100PorCentoDeCobertura() {
+        Consulta consulta = criarConsulta(100.0, 100.0, "Consulta de rotina");
+        CalculadoraReembolso reembolso = new CalculadoraReembolso();
+
+        double resultado = reembolso.calcular(
+                consulta.getPaciente(),
+                consulta.getValor(),
+                consulta.getPercentualReembolso(),
+                consulta.getObservacao()
+        );
+
+        double reembolsoEsperado = 100.0;
+        assertEquals(reembolsoEsperado, resultado, 0.01);
+    }
+
     private Paciente criarPacienteDummy() {
         return new Paciente("Matheus Dummy", "123456789-70", "matheus.zilli@al.infnet.edu.br");
     }
@@ -136,4 +185,19 @@ public class ReembolsoDeConsultasTest {
             }
         };
     }
+
+    private Consulta criarConsultaPadrao() {
+        Paciente paciente = criarPacienteDummy();
+        double valor = 200.0;
+        double percentualReembolso = 70.0;
+        String observacao = "Consulta de rotina";
+
+        return new Consulta(paciente, valor, percentualReembolso, observacao);
+    }
+
+    private Consulta criarConsulta(double valor, double percentualReembolso, String observacao) {
+        Paciente paciente = criarPacienteDummy();
+        return new Consulta(paciente, valor, percentualReembolso, observacao);
+    }
+
 }
