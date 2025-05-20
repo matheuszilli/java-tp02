@@ -15,33 +15,9 @@ import static org.junit.Assert.assertTrue;
 
 public class ReembolsoDeConsultasTest {
 
-
-//    @Test
-//    public void calcularReembolsoDeConsultaCom70PorCentoDeCobertura() {
-//        Paciente paciente = criarPacienteDummy();
-//        CalculadoraReembolso reembolso = new CalculadoraReembolso();
-//        double resultado = reembolso.calcular(paciente, 200.0, 70.0, "Consulta de rotina");
-//        double reembolsoEsperado = 140.00;
-//        assertEquals(reembolsoEsperado, resultado, 0.01);
-//    }
-
-//    @Test
-//    public void calcularReembolsoDeConsultaCom0PorCentoDeCobertura() {
-//        Paciente paciente = criarPacienteDummy();
-//        CalculadoraReembolso reembolso = new CalculadoraReembolso();
-//        double resultado = reembolso.calcular(paciente, 100.0, 0.0, "Consulta de rotina");
-//        double reembolsoEsperado = 0.00;
-//        assertEquals(reembolsoEsperado, resultado, 0.01);
-//    }
-
-//    @Test
-//    public void calcularReembolsoDeConsultaCom100PorCentoDeCobertura() {
-//        Paciente paciente = criarPacienteDummy();
-//        CalculadoraReembolso reembolso = new CalculadoraReembolso();
-//        double resultado = reembolso.calcular(paciente, 100.0, 100.0, "Consulta de rotina");
-//        double reembolsoEsperado = 100.0;
-//        assertEquals(reembolsoEsperado, resultado, 0.01);
-//    }
+    private void assertValoresIguaisComMargemDeErro(double esperado, double atual) {
+        assertEquals(esperado, atual, 0.01);
+    }
 
     @Test
     public void deveRegistrarConsultaNoHistorico() {
@@ -71,7 +47,7 @@ public class ReembolsoDeConsultasTest {
         double resultado = reembolso.calcularPlanoDeSaude(paciente, valorConsulta, planoSaude, "Consulta de rotina");
         double reembolsoEsperado = 100.0;
 
-        assertEquals(reembolsoEsperado, resultado, 0.01);
+        assertValoresIguaisComMargemDeErro(reembolsoEsperado, resultado);
     }
 
     @Test
@@ -84,7 +60,7 @@ public class ReembolsoDeConsultasTest {
         double resultado = reembolso.calcularPlanoDeSaude(paciente, valorConsulta, planoSaude, "Consulta de rotina");
         double reembolsoEsperado = 160.0;
 
-        assertEquals(reembolsoEsperado, resultado, 0.01);
+        assertValoresIguaisComMargemDeErro(reembolsoEsperado, resultado);
     }
 
     @Test
@@ -111,7 +87,7 @@ public class ReembolsoDeConsultasTest {
         );
 
         double reembolsoEsperado = 140.00;
-        assertEquals(reembolsoEsperado, resultado, 0.01);
+        assertValoresIguaisComMargemDeErro(reembolsoEsperado, resultado);
     }
 
     @Test
@@ -127,7 +103,7 @@ public class ReembolsoDeConsultasTest {
         );
 
         double reembolsoEsperado = 0.00;
-        assertEquals(reembolsoEsperado, resultado, 0.01);
+        assertValoresIguaisComMargemDeErro(reembolsoEsperado, resultado);
     }
 
     @Test
@@ -143,7 +119,7 @@ public class ReembolsoDeConsultasTest {
         );
 
         double reembolsoEsperado = 100.0;
-        assertEquals(reembolsoEsperado, resultado, 0.01);
+        assertValoresIguaisComMargemDeErro(reembolsoEsperado, resultado);
     }
 
     private Paciente criarPacienteDummy() {
@@ -199,5 +175,4 @@ public class ReembolsoDeConsultasTest {
         Paciente paciente = criarPacienteDummy();
         return new Consulta(paciente, valor, percentualReembolso, observacao);
     }
-
 }
