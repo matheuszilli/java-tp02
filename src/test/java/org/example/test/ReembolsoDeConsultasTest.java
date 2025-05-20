@@ -3,20 +3,97 @@ package org.example.test;
 import org.example.model.Consulta;
 import org.example.model.Paciente;
 import org.example.model.PlanoSaude;
+import org.example.service.Auditoria;
+import org.example.service.AutorizadorReembolso;
 import org.example.service.CalculadoraReembolso;
 import org.example.repository.HistoricoConsultas;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class ReembolsoDeConsultasTest {
 
     private void assertValoresIguaisComMargemDeErro(double esperado, double atual) {
         assertEquals(esperado, atual, 0.01);
+    }
+
+    @Test
+    public void testeIntegracaoComVariosDoublesDeveCalcularReembolsoCorreto() {
+
+        Consulta consulta = criarConsulta(250.0, 80.0, "Consulta especializada");
+
+        PlanoSaude planoSaudeStub = criarPlanoSaudeStub80PorCento();
+
+        AutorizadorReembolso autorizadorMock = Mockito.mock(AutorizadorReembolso.class);
+        when(autorizadorMock.autorizar(any(Paciente.class), anyDouble(), anyDouble()))
+                .thenReturn(true);
+
+        AuditoriaSpy auditoriaSpy = new AuditoriaSpy();
+
+        HistoricoConsultas historicoConsultasDummy = criarHistoricoConsultasDummy();
+
+        CalculadoraReembolso calculadora = new CalculadoraReembolso() {
+            private Auditoria auditoria = auditoriaSpy;
+            private AutorizadorReembolso autorizador = autorizadorMock;
+
+            @Override
+            public double calcularPlanoDeSaude(Paciente paciente, double valorConsulta, PlanoSaude planoSaude, String observacao) {
+                if (autorizador != null) {
+                    boolean autorizado = autorizador.autorizar(paciente, valorConsulta, planoSaude.getPercentualCobertura());
+                    if (!autorizado) {
+                        throw new ReembolsoNaoAutorizadoException("Reembolso não autorizado");
+                    }
+                }
+
+                double percentualReembolso = planoSaude.getPercentualCobertura();
+                double valorReembolso = valorConsulta * (percentualReembolso / 100);
+
+                if (valorReembolso > 150.0) {
+                    valorReembolso = 150.0;
+                }
+
+                if (auditoria != null) {
+                    auditoria.registrarConsulta(paciente, valorConsulta, valorReembolso, observacao);
+                }
+
+                return valorReembolso;
+            }
+        };
+
+        double resultado = calculadora.calcularPlanoDeSaude(
+                consulta.getPaciente(),
+                consulta.getValor(),
+                planoSaudeStub,
+                consulta.getObservacao()
+        );
+
+        historicoConsultasDummy.registrarConsulta(
+                consulta.getPaciente(),
+                consulta.getValor(),
+                resultado,
+                consulta.getObservacao()
+        );
+
+        assertValoresIguaisComMargemDeErro(150.0, resultado);
+
+        assertTrue("O método de auditoria deveria ter sido chamado", auditoriaSpy.foiChamado());
+
+        assertEquals(1, historicoConsultasDummy.listarConsultas().size());
+
+        verify(autorizadorMock).autorizar(
+                consulta.getPaciente(),
+                consulta.getValor(),
+                planoSaudeStub.getPercentualCobertura()
+        );
     }
 
     @Test
@@ -58,7 +135,7 @@ public class ReembolsoDeConsultasTest {
 
         double valorConsulta = 200.0;
         double resultado = reembolso.calcularPlanoDeSaude(paciente, valorConsulta, planoSaude, "Consulta de rotina");
-        double reembolsoEsperado = 150.0; // Limitado ao teto de 150.0 (seria 160.0 = 200.0 * 80%)
+        double reembolsoEsperado = 150.0;
 
         assertValoresIguaisComMargemDeErro(reembolsoEsperado, resultado);
     }
@@ -164,6 +241,18 @@ public class ReembolsoDeConsultasTest {
         assertValoresIguaisComMargemDeErro(reembolsoEsperado, resultado);
     }
 
+    @Test(expected = ReembolsoNaoAutorizadoException.class)
+    public void reembolsoNaoAutorizadoDeveLancarExcecao() {
+        Paciente paciente = criarPacienteDummy();
+        AutorizadorReembolso autorizadorMock = Mockito.mock(AutorizadorReembolso.class);
+        when(autorizadorMock.autorizar(any(Paciente.class), anyDouble(), anyDouble()))
+                .thenReturn(false);
+
+        CalculadoraReembolso reembolso = new CalculadoraReembolso(autorizadorMock);
+
+        reembolso.calcular(paciente, 200.0, 70.0, "Consulta de rotina");
+    }
+
     private Paciente criarPacienteDummy() {
         return new Paciente("Matheus Dummy", "123456789-70", "matheus.zilli@al.infnet.edu.br");
     }
@@ -225,5 +314,24 @@ public class ReembolsoDeConsultasTest {
     private Consulta criarConsulta(double valor, double percentualReembolso, String observacao) {
         Paciente paciente = criarPacienteDummy();
         return new Consulta(paciente, valor, percentualReembolso, observacao);
+    }
+
+    public class ReembolsoNaoAutorizadoException extends RuntimeException {
+        public ReembolsoNaoAutorizadoException(String message) {
+            super(message);
+        }
+    }
+
+    public class AuditoriaSpy implements Auditoria {
+        private boolean foiChamado = false;
+
+        @Override
+        public void registrarConsulta(Paciente paciente, double valorConsulta, double valorReembolso, String observacao) {
+            foiChamado = true;
+        }
+
+        public boolean foiChamado() {
+            return foiChamado;
+        }
     }
 }
