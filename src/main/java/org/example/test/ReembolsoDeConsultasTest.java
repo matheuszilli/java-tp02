@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ReembolsoDeConsultasTest {
 
@@ -18,7 +19,7 @@ public class ReembolsoDeConsultasTest {
     public void calcularReembolsoDeConsultaCom70PorCentoDeCobertura() {
         Paciente paciente = criarPacienteDummy();
         CalculadoraReembolso reembolso = new CalculadoraReembolso();
-        double resultado = reembolso.calcular(paciente, 200.0, 70.0);
+        double resultado = reembolso.calcular(paciente, 200.0, 70.0, "Consulta de rotina");
         double reembolsoEsperado = 140.00;
         assertEquals(reembolsoEsperado, resultado, 0.01);
     }
@@ -27,7 +28,7 @@ public class ReembolsoDeConsultasTest {
     public void calcularReembolsoDeConsultaCom0PorCentoDeCobertura() {
         Paciente paciente = criarPacienteDummy();
         CalculadoraReembolso reembolso = new CalculadoraReembolso();
-        double resultado = reembolso.calcular(paciente, 100.0, 0.0);
+        double resultado = reembolso.calcular(paciente, 100.0, 0.0, "Consulta de rotina");
         double reembolsoEsperado = 0.00;
         assertEquals(reembolsoEsperado, resultado, 0.01);
     }
@@ -36,7 +37,7 @@ public class ReembolsoDeConsultasTest {
     public void calcularReembolsoDeConsultaCom100PorCentoDeCobertura() {
         Paciente paciente = criarPacienteDummy();
         CalculadoraReembolso reembolso = new CalculadoraReembolso();
-        double resultado = reembolso.calcular(paciente, 100.0, 100.0);
+        double resultado = reembolso.calcular(paciente, 100.0, 100.0, "Consulta de rotina");
         double reembolsoEsperado = 100.0;
         assertEquals(reembolsoEsperado, resultado, 0.01);
     }
@@ -49,7 +50,7 @@ public class ReembolsoDeConsultasTest {
         PlanoSaude planoSaude = criarPlanoSaudeStub50PorCento();
 
         double valor = 150.0;
-        double resultado = reembolso.calcular(paciente, valor, 50.0 );
+        double resultado = reembolso.calcular(paciente, valor, 50.0, "Consulta de rotina");
 
         historico.registrarConsulta(paciente, valor, resultado, "Consulta de rotina");
 
@@ -66,7 +67,7 @@ public class ReembolsoDeConsultasTest {
         PlanoSaude planoSaude = criarPlanoSaudeStub50PorCento();
 
         double valorConsulta = 200.0;
-        double resultado = reembolso.calcularPlanoDeSaude(paciente, valorConsulta, planoSaude);
+        double resultado = reembolso.calcularPlanoDeSaude(paciente, valorConsulta, planoSaude, "Consulta de rotina");
         double reembolsoEsperado = 100.0;
 
         assertEquals(reembolsoEsperado, resultado, 0.01);
@@ -79,10 +80,21 @@ public class ReembolsoDeConsultasTest {
         PlanoSaude planoSaude = criarPlanoSaudeStub80PorCento();
 
         double valorConsulta = 200.0;
-        double resultado = reembolso.calcularPlanoDeSaude(paciente, valorConsulta, planoSaude);
-        double reembolsoEsperado = 140.0;
+        double resultado = reembolso.calcularPlanoDeSaude(paciente, valorConsulta, planoSaude, "Consulta de rotina");
+        double reembolsoEsperado = 160.0;
 
         assertEquals(reembolsoEsperado, resultado, 0.01);
+    }
+
+    @Test
+    public void deveRegistrarNaAuditoria() {
+        Paciente paciente = criarPacienteDummy();
+        AuditoriaSpy auditoriaSpy = new AuditoriaSpy();
+        CalculadoraReembolso reembolso = new CalculadoraReembolso(auditoriaSpy);
+
+        reembolso.calcular(paciente, 200.0, 70.0, "Consulta de rotina");
+
+        assertTrue("O método de auditoria deveria ter sido chamado", auditoriaSpy.foiChamado());
     }
 
     private Paciente criarPacienteDummy() {
@@ -102,7 +114,7 @@ public class ReembolsoDeConsultasTest {
         return new PlanoSaude() {
             @Override
             public double getPercentualCobertura() {
-                return 70.0;
+                return 80.0;
             }
         };
     }
